@@ -12,11 +12,8 @@ import {
   LinearProgress,
   Alert,
 } from "@mui/material";
-import axios from "axios";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const apiURL = "http://localhost:3005";
+import useCreateTask from "./hooks/useCreateScript";
 
 const methodsList = [
   { key: "get", value: "GET" },
@@ -26,7 +23,7 @@ const methodsList = [
 ];
 
 const formInitValue = {
-  testName: "",
+  taskName: "",
   serverUrl: "",
   method: methodsList[0].key,
   description: "",
@@ -36,62 +33,17 @@ const formInitValue = {
 
 export default function AddScript() {
   const navigation = useNavigate();
-  const [formData, setFormData] = useState(formInitValue);
-  const [isUploading, setIsUploading] = useState({
-    testFile: false,
-    csvFile: false,
-  });
-
-  const [error, setError] = useState("");
-
-  const handleChange = (e) => {
-    const { value, name } = e.target;
-
-    setFormData((data) => ({ ...data, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (Object.values(formData).some((value) => !value)) {
-      setError("All fields must pe filled");
-      return;
-    }
-
-    try {
-      const res = await axios.post(`${apiURL}/tasks`, formData);
-      setError("");
-      navigation("/all-scripts");
-    } catch (error) {
-      console.log("error: ", error);
-    }
-  };
-
-  const onFileChange = async (e) => {
-    const { files, name } = e.target;
-    setIsUploading((uploading) => ({ ...uploading, [name]: true }));
-    try {
-      const formData = new FormData();
-      formData.append("file", files[0]);
-
-      const res = await axios.post(`${apiURL}/upload`, formData, {
-        withCredentials: false,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-        },
-      });
-
-      setFormData((data) => ({
-        ...data,
-        [name]: `${apiURL}/${res.data.name}`,
-      }));
-    } catch (error) {
-      console.log(error);
-    }
-    setIsUploading((uploading) => ({ ...uploading, [name]: true }));
-  };
+  const {
+    formData,
+    error,
+    handleChange,
+    handleFileChange,
+    handleSubmit,
+    isUploading,
+  } = useCreateTask(methodsList, formInitValue);
 
   return (
-    <Container maxWidth="sm" sx={{ padding: "5rem 2rem" }}>
+    <Container maxWidth="sm" sx={{ padding: "2rem" }}>
       <form>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           Add new test script
@@ -101,9 +53,9 @@ export default function AddScript() {
           id="standard-basic"
           label="Test name"
           variant="outlined"
-          value={formData.testName}
+          value={formData.taskName}
           onChange={handleChange}
-          name="testName"
+          name="taskName"
           fullWidth
           required
         />
@@ -150,26 +102,26 @@ export default function AddScript() {
         <Grid container justifyContent="center" spacing={2}>
           <Grid item xs={6}>
             <InputLabel htmlFor="text-input">
-              Select environment file
+              Select environment file (.txt file)
             </InputLabel>
             <Input
               id="text-input"
               type="file"
               name="envFile"
               accept="text/plain"
-              onChange={onFileChange}
+              onChange={handleFileChange}
               required
             />
-            {isUploading.testFile && <LinearProgress />}
+            {isUploading.envFile && <LinearProgress />}
           </Grid>
           <Grid item xs={6}>
             <InputLabel htmlFor="csv-input">Select test.csv</InputLabel>
             <Input
               id="csv-input"
               type="file"
-              accept=".csv"
+              accept="text/csv"
               name="testFile"
-              onChange={onFileChange}
+              onChange={handleFileChange}
               required
             />
             {isUploading.testFile && <LinearProgress />}
@@ -179,7 +131,10 @@ export default function AddScript() {
           variant="contained"
           sx={{ marginTop: "10px" }}
           type="submit"
-          onClick={handleSubmit}
+          onClick={handleSubmit(() => navigation("/all-scripts"))}
+          disabled={Boolean(
+            Object.values(formData).some((value) => !value) || error
+          )}
         >
           Schedule test
         </Button>

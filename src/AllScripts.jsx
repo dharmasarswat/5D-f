@@ -6,38 +6,19 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
 import { Container, Skeleton } from "@mui/material";
-import axios from "axios";
-
-const apiURL = "http://localhost:3005";
-
-function createData(name, calories, fat, carbs, protein) {
-  return { name, calories, fat, carbs, protein };
-}
-
-const rows = [
-  createData("Frozen yoghurt", 159, 6.0, 24),
-  createData("Ice cream sandwich", 237, 9.0, 37),
-  createData("Eclair", 262, 16.0, 24),
-  createData("Cupcake", 305, 3.7, 67),
-  createData("Gingerbread", 356, 16.0, 49),
-];
+import useAllScripts from "./hooks/useAllScripts";
 
 export default function AllScripts() {
-  const [tests, setTests] = React.useState([]);
+  const { tasks, isLoading } = useAllScripts();
 
-  React.useEffect(() => {
-    const fetchTests = async () => {
-      try {
-        const res = await axios.get(`${apiURL}/tests`);
-        setTests(res.data);
-      } catch (error) {
-        console.log("error: ", error);
-      }
-    };
-
-    fetchTests();
-  }, []);
+  if (!tasks.length && !isLoading)
+    return (
+      <Typography variant="h4" component="div" sx={{ padding: "4rem" }}>
+        No tasks found
+      </Typography>
+    );
 
   return (
     <Container maxWidth="lg" sx={{ padding: "5rem 2rem" }}>
@@ -48,38 +29,30 @@ export default function AllScripts() {
               <TableCell>Sr. no.</TableCell>
               <TableCell align="right">Test name</TableCell>
               <TableCell align="right">Added on</TableCell>
+              <TableCell align="right">Time taken</TableCell>
               <TableCell align="right">Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row, index) => (
+            {tasks.map((task, index) => (
               <TableRow
-                key={row.name}
+                key={task._id}
                 sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
               >
-                <TableCell component="th">{index}</TableCell>
-                <TableCell align="right">{row.calories}</TableCell>
-                <TableCell align="right">{row.fat}</TableCell>
-                <TableCell align="right">{row.carbs}</TableCell>
+                <TableCell component="th">{index + 1}</TableCell>
+                <TableCell align="right">{task.taskName}</TableCell>
+                <TableCell align="right">
+                  {new Date(task.createdAt).toDateString()}
+                </TableCell>
+                <TableCell align="right">{task.timeTaken}</TableCell>
+                <TableCell align="right">{task.status}</TableCell>
               </TableRow>
             ))}
 
-            {!rows.length &&
+            {/* show loader if data is loading */}
+            {isLoading &&
               Array.from({ length: 3 }).map((_, index) => (
-                <TableRow key={index}>
-                  <TableCell component="th">
-                    <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
-                  </TableCell>
-                </TableRow>
+                <Loader key={index} />
               ))}
           </TableBody>
         </Table>
@@ -87,3 +60,23 @@ export default function AllScripts() {
     </Container>
   );
 }
+
+const Loader = () => (
+  <TableRow>
+    <TableCell component="th">
+      <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
+    </TableCell>
+    <TableCell align="right">
+      <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
+    </TableCell>
+    <TableCell align="right">
+      <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
+    </TableCell>
+    <TableCell align="right">
+      <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
+    </TableCell>
+    <TableCell align="right">
+      <Skeleton variant="text" sx={{ fontSize: "1rem" }} />
+    </TableCell>
+  </TableRow>
+);
